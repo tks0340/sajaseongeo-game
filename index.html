@@ -1,0 +1,859 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>사자성어 맞추기</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --panel: #fffaf0;
+      --ink: #171717;
+      --muted: #665d53;
+      --line: #d8cbb9;
+      --blue: #146b83;
+      --green: #2f7a4f;
+      --red: #b53a34;
+      --gold: #d39b24;
+      --tile: #fffdf7;
+      --shadow: rgba(38, 31, 20, .16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif;
+      touch-action: manipulation;
+    }
+
+    body {
+      min-height: 100svh;
+      padding: max(8px, env(safe-area-inset-top)) 8px max(9px, env(safe-area-inset-bottom));
+      display: grid;
+      place-items: stretch start;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      min-width: 0;
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      color: var(--ink);
+      font-weight: 900;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    button:active {
+      transform: translateY(2px);
+    }
+
+    .app {
+      width: 100%;
+      max-width: 344px;
+      height: calc(100svh - max(8px, env(safe-area-inset-top)) - max(9px, env(safe-area-inset-bottom)));
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+      gap: 6px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 7px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    h1 {
+      margin: 0;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 23px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .top-actions {
+      display: grid;
+      grid-template-columns: repeat(2, 40px);
+      gap: 5px;
+    }
+
+    .icon-btn {
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      box-shadow: 0 3px 0 #d4c5b0;
+      font-size: 17px;
+    }
+
+    .scorebox {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .chip {
+      min-width: 0;
+      padding: 5px 2px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      text-align: center;
+      box-shadow: 0 3px 9px rgba(38, 31, 20, .08);
+    }
+
+    .chip span {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.05;
+    }
+
+    .chip b {
+      display: block;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 15px;
+      line-height: 1.1;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .setup select {
+      min-width: 0;
+      min-height: 39px;
+      padding: 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fffdf8;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .setup .small {
+      min-height: 39px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      background: #fffaf1;
+      box-shadow: 0 3px 0 #d4c5b0;
+      font-size: 13px;
+    }
+
+    .game {
+      min-height: 0;
+      padding: 8px;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, auto) auto;
+      gap: 7px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 8px 18px var(--shadow);
+    }
+
+    .meaning {
+      min-height: 44px;
+      margin: 0;
+      display: grid;
+      align-items: center;
+      font-size: 17px;
+      font-weight: 900;
+      line-height: 1.25;
+      word-break: keep-all;
+    }
+
+    .answer,
+    .letters {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .slot {
+      min-width: 0;
+      min-height: 46px;
+      display: grid;
+      place-items: center;
+      border: 2px dashed #b9ad9b;
+      border-radius: 8px;
+      background: #f5efe3;
+      color: var(--blue);
+      font-size: 24px;
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .slot.filled {
+      border-style: solid;
+      background: #e4f0f3;
+    }
+
+    .letter-btn {
+      min-height: 58px;
+      border: 1px solid #cfbea7;
+      background: linear-gradient(180deg, var(--tile), #f3e5cf);
+      box-shadow: 0 5px 0 #c9b79e, 0 7px 9px rgba(47, 37, 25, .16);
+      font-size: 27px;
+      line-height: 1;
+    }
+
+    .letter-btn.used {
+      opacity: .18;
+      transform: none;
+      pointer-events: none;
+    }
+
+    .notice {
+      min-height: 22px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+
+    .notice.good {
+      color: var(--green);
+    }
+
+    .notice.bad {
+      color: var(--red);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .controls button {
+      min-height: 41px;
+      padding: 0 4px;
+      border: 1px solid var(--line);
+      background: #fffaf1;
+      box-shadow: 0 3px 0 #d4c5b0;
+      font-size: 13px;
+    }
+
+    .controls .blue {
+      border-color: #0f5f74;
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 3px 0 #0d5061;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      place-items: end center;
+      padding: 12px;
+      background: rgba(0, 0, 0, .42);
+    }
+
+    .modal.show {
+      display: grid;
+    }
+
+    .modal-card {
+      width: min(100%, 410px);
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, .28);
+    }
+
+    .modal-card h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+
+    .modal-card p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .rank-list {
+      display: grid;
+      gap: 6px;
+      margin: 8px 0 10px;
+    }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 58px;
+      gap: 6px;
+      align-items: center;
+      min-height: 33px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #f3eadc;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .rank-row span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rank-score {
+      text-align: right;
+    }
+
+    .name-input {
+      width: 100%;
+      min-height: 44px;
+      margin: 0 0 9px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      font-size: 16px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .modal-actions button {
+      background: #fffaf1;
+      border: 1px solid var(--line);
+    }
+
+    .modal-actions .save {
+      background: var(--gold);
+      color: #171717;
+      border-color: #b88317;
+    }
+
+    @media (min-width: 700px) {
+      body {
+        place-items: stretch center;
+      }
+
+      .app {
+        max-width: 430px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>사자성어 맞추기</h1>
+      <div class="top-actions">
+        <button class="icon-btn" id="rankBtn" type="button" aria-label="랭킹">★</button>
+        <button class="icon-btn" id="restartTopBtn" type="button" aria-label="새 게임">↻</button>
+      </div>
+    </header>
+
+    <section class="scorebox" aria-label="게임 상태">
+      <div class="chip"><span>점수</span><b id="scoreText">0</b></div>
+      <div class="chip"><span>연속</span><b id="comboText">0</b></div>
+      <div class="chip"><span>기회</span><b id="lifeText">3</b></div>
+      <div class="chip"><span>시간</span><b id="timeText">25</b></div>
+      <div class="chip"><span>문제</span><b id="roundText">1/12</b></div>
+    </section>
+
+    <section class="setup" aria-label="난이도 설정">
+      <select id="difficultySelect" aria-label="난이도 선택">
+        <option value="normal">보통: 8글자 25초</option>
+        <option value="hard">어려움: 10글자 18초</option>
+        <option value="expert">고수: 12글자 14초</option>
+      </select>
+      <button class="small" id="applyDifficultyBtn" type="button">적용</button>
+    </section>
+
+    <section class="game" aria-label="사자성어 문제">
+      <p class="meaning" id="meaningText">뜻을 보고 사자성어를 맞추세요.</p>
+      <div class="answer" id="answerSlots" aria-label="정답 칸"></div>
+      <div class="letters" id="letterPad" aria-label="글자 누르는 버튼"></div>
+      <p class="notice" id="noticeText">함정 글자가 섞여 있습니다. 순서대로 누르세요.</p>
+    </section>
+
+    <nav class="controls" aria-label="게임 조작">
+      <button id="undoBtn" type="button">지우기</button>
+      <button id="hintBtn" type="button">힌트</button>
+      <button id="skipBtn" type="button">넘김</button>
+      <button class="blue" id="newBtn" type="button">새게임</button>
+    </nav>
+  </main>
+
+  <div class="modal" id="rankModal" role="dialog" aria-modal="true" aria-label="랭킹">
+    <div class="modal-card">
+      <h2>랭킹 Top 5</h2>
+      <p>난이도와 점수를 함께 저장합니다.</p>
+      <div class="rank-list" id="rankList"></div>
+      <div class="modal-actions">
+        <button id="clearRankBtn" type="button">기록삭제</button>
+        <button class="save" id="closeRankBtn" type="button">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="finishModal" role="dialog" aria-modal="true" aria-label="게임 종료">
+    <div class="modal-card">
+      <h2 id="finishTitle">게임 종료</h2>
+      <p id="finishText">점수 0점</p>
+      <input class="name-input" id="playerName" maxlength="8" autocomplete="off" value="도도진" aria-label="이름 입력">
+      <div class="modal-actions">
+        <button id="againBtn" type="button">새게임</button>
+        <button class="save" id="saveScoreBtn" type="button">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const RANK_KEY = "sajaseongeoRanks20260606v1";
+    const RANK_BACKUP_KEY = "sajaseongeoRanks20260606v1Backup";
+    const BEST_KEY = "sajaseongeoBest20260606v1";
+
+    const DIFFICULTY = {
+      normal: { label: "보통", rounds: 12, life: 3, time: 25, letters: 8, correct: 100, combo: 18, hint: 20, timeout: 1 },
+      hard: { label: "어려움", rounds: 12, life: 3, time: 18, letters: 10, correct: 140, combo: 26, hint: 35, timeout: 1 },
+      expert: { label: "고수", rounds: 15, life: 2, time: 14, letters: 12, correct: 190, combo: 38, hint: 50, timeout: 2 }
+    };
+
+    const problems = [
+      { word: "고진감래", meaning: "고생 끝에 즐거움이 온다는 뜻", group: "고감래진" },
+      { word: "과유불급", meaning: "지나친 것은 모자란 것과 같다는 뜻", group: "과유불급족지" },
+      { word: "동문서답", meaning: "묻는 말과 맞지 않는 대답", group: "동서문답문전" },
+      { word: "사면초가", meaning: "도움받기 어려운 외로운 처지", group: "사면초가고립" },
+      { word: "전화위복", meaning: "나쁜 일이 좋은 일로 바뀜", group: "전화위복재운" },
+      { word: "일석이조", meaning: "한 가지 일로 두 가지 이익을 얻음", group: "일석이조삼익" },
+      { word: "청출어람", meaning: "제자가 스승보다 더 뛰어남", group: "청출어람남쪽" },
+      { word: "유비무환", meaning: "미리 준비하면 걱정할 일이 없음", group: "유비무환준비" },
+      { word: "우공이산", meaning: "꾸준히 노력하면 큰일도 이룸", group: "우공이산노력" },
+      { word: "금상첨화", meaning: "좋은 일에 또 좋은 일이 더해짐", group: "금상첨화복운" },
+      { word: "설상가상", meaning: "어려운 일에 더 어려운 일이 겹침", group: "설상가상빙한" },
+      { word: "자업자득", meaning: "자기가 한 일의 결과를 자기가 받음", group: "자업자득과보" },
+      { word: "오리무중", meaning: "일의 실마리를 알 수 없는 상태", group: "오리무중안개" },
+      { word: "이심전심", meaning: "말하지 않아도 마음이 서로 통함", group: "이심전심마음" },
+      { word: "작심삼일", meaning: "결심이 오래가지 못함", group: "작심삼일결심" },
+      { word: "백발백중", meaning: "예측한 것이 모두 들어맞음", group: "백발백중명중" },
+      { word: "문전성시", meaning: "찾아오는 사람이 많아 매우 붐빔", group: "문전성시방문" },
+      { word: "막상막하", meaning: "실력이 비슷해 우열을 가리기 어려움", group: "막상막하우열" },
+      { word: "동상이몽", meaning: "겉은 같아도 속마음은 서로 다름", group: "동상이몽꿈심" },
+      { word: "새옹지마", meaning: "좋고 나쁨은 쉽게 단정할 수 없음", group: "새옹지마화복" },
+      { word: "견물생심", meaning: "물건을 보면 가지고 싶은 마음이 생김", group: "견물생심욕심" },
+      { word: "군계일학", meaning: "무리 가운데 유난히 뛰어난 사람", group: "군계일학뛰어" },
+      { word: "다다익선", meaning: "많으면 많을수록 좋다는 뜻", group: "다다익선많음" },
+      { word: "대기만성", meaning: "큰 인물은 늦게 이루어진다는 뜻", group: "대기만성인물" },
+      { word: "각골난망", meaning: "은혜를 깊이 새겨 잊지 못함", group: "각골난망은혜" },
+      { word: "감언이설", meaning: "남을 꾀기 위한 달콤한 말", group: "감언이설속임" },
+      { word: "구사일생", meaning: "거의 죽을 뻔하다 겨우 살아남", group: "구사일생위기" },
+      { word: "권선징악", meaning: "착한 일을 권하고 악한 일을 벌함", group: "권선징악선악" },
+      { word: "난형난제", meaning: "둘 다 뛰어나 우열을 가리기 어려움", group: "난형난제형제" },
+      { word: "반신반의", meaning: "반은 믿고 반은 의심함", group: "반신반의믿음" }
+    ];
+
+    const decoys = "가나다라마바사아자차카타파하천지만복운심성문답동서남북불급청람고감래유비무환";
+
+    const els = {
+      score: document.getElementById("scoreText"),
+      combo: document.getElementById("comboText"),
+      life: document.getElementById("lifeText"),
+      time: document.getElementById("timeText"),
+      round: document.getElementById("roundText"),
+      difficulty: document.getElementById("difficultySelect"),
+      meaning: document.getElementById("meaningText"),
+      slots: document.getElementById("answerSlots"),
+      pad: document.getElementById("letterPad"),
+      notice: document.getElementById("noticeText"),
+      rankModal: document.getElementById("rankModal"),
+      finishModal: document.getElementById("finishModal"),
+      rankList: document.getElementById("rankList"),
+      finishTitle: document.getElementById("finishTitle"),
+      finishText: document.getElementById("finishText"),
+      playerName: document.getElementById("playerName")
+    };
+
+    let state;
+    let timerId = 0;
+    let nextTimerId = 0;
+    let scoreSaved = false;
+
+    function shuffle(items) {
+      const list = items.slice();
+      for (let i = list.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
+      }
+      return list;
+    }
+
+    function settings() {
+      return DIFFICULTY[els.difficulty.value] || DIFFICULTY.normal;
+    }
+
+    function normalizeRanks(items) {
+      if (!Array.isArray(items)) return [];
+      const seen = new Set();
+      return items
+        .map(item => ({
+          name: String(item.name || "이름없음").slice(0, 8),
+          score: Number(item.score) || 0,
+          level: String(item.level || "보통").slice(0, 6),
+          date: String(item.date || "")
+        }))
+        .filter(item => item.score >= 0)
+        .filter(item => {
+          const key = `${item.name}|${item.score}|${item.level}|${item.date}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+    }
+
+    function loadRanks() {
+      try {
+        const primary = JSON.parse(localStorage.getItem(RANK_KEY) || "[]");
+        const backup = JSON.parse(localStorage.getItem(RANK_BACKUP_KEY) || "[]");
+        return normalizeRanks(primary.concat(backup));
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveRanks(ranks) {
+      const normalized = normalizeRanks(ranks);
+      try {
+        localStorage.setItem(RANK_KEY, JSON.stringify(normalized));
+        localStorage.setItem(RANK_BACKUP_KEY, JSON.stringify(normalized));
+      } catch (error) {
+        notice("저장 공간을 사용할 수 없습니다.", "bad");
+      }
+      return normalized;
+    }
+
+    function setBest(score) {
+      const best = Number(localStorage.getItem(BEST_KEY) || "0") || 0;
+      if (score > best) localStorage.setItem(BEST_KEY, String(score));
+    }
+
+    function makeLetters(problem) {
+      const goal = settings().letters;
+      const letters = problem.word.split("");
+      const pool = (problem.group + decoys).split("");
+      while (letters.length < goal) {
+        const ch = pool[Math.floor(Math.random() * pool.length)];
+        letters.push(ch);
+      }
+      return shuffle(letters).map((char, index) => ({
+        id: `${Date.now()}-${index}-${char}`,
+        char
+      }));
+    }
+
+    function startGame() {
+      const cfg = settings();
+      window.clearInterval(timerId);
+      window.clearTimeout(nextTimerId);
+      state = {
+        deck: shuffle(problems).slice(0, cfg.rounds),
+        round: 0,
+        score: 0,
+        combo: 0,
+        life: cfg.life,
+        timeLeft: cfg.time,
+        picked: [],
+        letters: [],
+        locked: false,
+        hinted: false,
+        level: cfg.label
+      };
+      scoreSaved = false;
+      els.finishModal.classList.remove("show");
+      els.rankModal.classList.remove("show");
+      loadQuestion();
+    }
+
+    function currentProblem() {
+      return state.deck[state.round];
+    }
+
+    function loadQuestion() {
+      const cfg = settings();
+      window.clearInterval(timerId);
+      window.clearTimeout(nextTimerId);
+      if (state.round >= cfg.rounds || state.life <= 0) {
+        endGame();
+        return;
+      }
+
+      const problem = currentProblem();
+      state.picked = [];
+      state.letters = makeLetters(problem);
+      state.locked = false;
+      state.hinted = false;
+      state.timeLeft = cfg.time;
+      els.meaning.textContent = problem.meaning;
+      notice(`${cfg.label}: 함정 글자 ${cfg.letters - 4}개. 시간 보너스 있음.`, "");
+      render();
+      timerId = window.setInterval(tick, 1000);
+    }
+
+    function tick() {
+      if (state.locked) return;
+      state.timeLeft -= 1;
+      renderStatus();
+      if (state.timeLeft <= 0) {
+        timeOut();
+      }
+    }
+
+    function timeOut() {
+      const cfg = settings();
+      const halfScore = Math.floor(cfg.correct / 2);
+      state.score += halfScore;
+      state.combo = 0;
+      state.locked = true;
+      notice(`시간초과. 정답은 ${currentProblem().word} +${halfScore}점`, "bad");
+      render();
+      finishRound(850);
+    }
+
+    function render() {
+      renderStatus();
+      renderSlots();
+      renderLetters();
+    }
+
+    function renderStatus() {
+      const cfg = settings();
+      els.score.textContent = state.score;
+      els.combo.textContent = state.combo;
+      els.life.textContent = state.life;
+      els.time.textContent = Math.max(0, state.timeLeft);
+      els.round.textContent = `${Math.min(state.round + 1, cfg.rounds)}/${cfg.rounds}`;
+    }
+
+    function renderSlots() {
+      els.slots.innerHTML = "";
+      for (let i = 0; i < 4; i += 1) {
+        const slot = document.createElement("button");
+        slot.type = "button";
+        slot.className = state.picked[i] ? "slot filled" : "slot";
+        slot.textContent = state.picked[i] ? state.picked[i].char : "";
+        slot.setAttribute("aria-label", `${i + 1}번째 정답 칸`);
+        slot.addEventListener("click", undoLetter);
+        els.slots.appendChild(slot);
+      }
+    }
+
+    function renderLetters() {
+      els.pad.innerHTML = "";
+      state.letters.forEach(letter => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "letter-btn";
+        btn.textContent = letter.char;
+        btn.setAttribute("aria-label", `${letter.char} 글자 선택`);
+        if (state.picked.some(item => item.id === letter.id)) {
+          btn.classList.add("used");
+        }
+        btn.addEventListener("click", () => pickLetter(letter));
+        els.pad.appendChild(btn);
+      });
+    }
+
+    function pickLetter(letter) {
+      if (state.locked || state.picked.length >= 4) return;
+      state.picked.push(letter);
+      renderSlots();
+      renderLetters();
+      if (state.picked.length === 4) checkAnswer();
+    }
+
+    function undoLetter() {
+      if (state.locked || state.picked.length === 0) return;
+      state.picked.pop();
+      notice("마지막 글자를 지웠습니다.", "");
+      render();
+    }
+
+    function checkAnswer() {
+      const cfg = settings();
+      const answer = state.picked.map(item => item.char).join("");
+      const problem = currentProblem();
+      state.locked = true;
+
+      if (answer === problem.word) {
+        const timeBonus = Math.max(0, state.timeLeft * (els.difficulty.value === "expert" ? 5 : 3));
+        const plus = cfg.correct + state.combo * cfg.combo + timeBonus - (state.hinted ? cfg.hint : 0);
+        state.score += Math.max(30, plus);
+        state.combo += 1;
+        notice(`정답! ${problem.word} +${Math.max(30, plus)}점`, "good");
+        finishRound(650);
+      } else {
+        state.life -= 1;
+        state.combo = 0;
+        state.score = Math.max(0, state.score - 20);
+        notice(`오답. 정답은 ${problem.word}`, "bad");
+        finishRound(900);
+      }
+      render();
+    }
+
+    function finishRound(delay) {
+      window.clearInterval(timerId);
+      window.clearTimeout(nextTimerId);
+      nextTimerId = window.setTimeout(nextQuestion, delay);
+    }
+
+    function nextQuestion() {
+      window.clearInterval(timerId);
+      window.clearTimeout(nextTimerId);
+      state.round += 1;
+      loadQuestion();
+    }
+
+    function useHint() {
+      const cfg = settings();
+      if (state.locked || state.hinted || state.picked.length >= 4) return;
+      const rightChar = currentProblem().word[state.picked.length];
+      const letter = state.letters.find(item => item.char === rightChar && !state.picked.some(pick => pick.id === item.id));
+      if (!letter) return;
+      state.hinted = true;
+      state.score = Math.max(0, state.score - cfg.hint);
+      state.timeLeft = Math.max(1, state.timeLeft - 3);
+      state.picked.push(letter);
+      notice("힌트 사용: 점수와 시간이 줄었습니다.", "");
+      render();
+      if (state.picked.length === 4) checkAnswer();
+    }
+
+    function skipQuestion() {
+      if (state.locked) return;
+      state.life -= 1;
+      state.combo = 0;
+      state.score = Math.max(0, state.score - 10);
+      state.locked = true;
+      notice(`넘김. 정답은 ${currentProblem().word}`, "bad");
+      render();
+      finishRound(750);
+    }
+
+    function endGame() {
+      window.clearInterval(timerId);
+      window.clearTimeout(nextTimerId);
+      setBest(state.score);
+      els.finishTitle.textContent = "게임 종료";
+      els.finishText.textContent = `${state.level} 난이도 / 최종 점수 ${state.score}점`;
+      els.finishModal.classList.add("show");
+      els.playerName.focus();
+    }
+
+    function notice(text, type) {
+      els.notice.textContent = text;
+      els.notice.className = `notice ${type || ""}`.trim();
+    }
+
+    function renderRanks() {
+      const ranks = loadRanks();
+      els.rankList.innerHTML = "";
+      if (!ranks.length) {
+        els.rankList.innerHTML = '<div class="rank-row"><span>-</span><span>기록 없음</span><span class="rank-score">0</span></div>';
+        return;
+      }
+
+      ranks.forEach((rank, index) => {
+        const row = document.createElement("div");
+        row.className = "rank-row";
+        row.innerHTML = `<span>${index + 1}위</span><span>${escapeHtml(rank.name)} · ${escapeHtml(rank.level)}</span><span class="rank-score">${rank.score}</span>`;
+        els.rankList.appendChild(row);
+      });
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function saveCurrentScore() {
+      if (scoreSaved) return;
+      scoreSaved = true;
+      const ranks = loadRanks();
+      ranks.push({
+        name: els.playerName.value.trim().slice(0, 8) || "도전자",
+        score: state.score,
+        level: state.level,
+        date: new Date().toISOString()
+      });
+      saveRanks(ranks);
+      els.finishModal.classList.remove("show");
+      renderRanks();
+      els.rankModal.classList.add("show");
+    }
+
+    document.getElementById("undoBtn").addEventListener("click", undoLetter);
+    document.getElementById("hintBtn").addEventListener("click", useHint);
+    document.getElementById("skipBtn").addEventListener("click", skipQuestion);
+    document.getElementById("newBtn").addEventListener("click", startGame);
+    document.getElementById("restartTopBtn").addEventListener("click", startGame);
+    document.getElementById("applyDifficultyBtn").addEventListener("click", startGame);
+    document.getElementById("rankBtn").addEventListener("click", () => {
+      renderRanks();
+      els.rankModal.classList.add("show");
+    });
+    document.getElementById("closeRankBtn").addEventListener("click", () => els.rankModal.classList.remove("show"));
+    document.getElementById("clearRankBtn").addEventListener("click", () => {
+      saveRanks([]);
+      renderRanks();
+    });
+    document.getElementById("againBtn").addEventListener("click", startGame);
+    document.getElementById("saveScoreBtn").addEventListener("click", saveCurrentScore);
+    els.playerName.addEventListener("keydown", event => {
+      if (event.key === "Enter") saveCurrentScore();
+    });
+
+    startGame();
+  </script>
+</body>
+</html>
