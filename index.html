@@ -72,7 +72,7 @@
       min-width: 0;
       min-height: 0;
       display: grid;
-      grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
       gap: 6px;
     }
 
@@ -166,6 +166,50 @@
       background: #fffaf1;
       box-shadow: 0 3px 0 #d4c5b0;
       font-size: 13px;
+    }
+
+    .result-strip {
+      display: grid;
+      grid-template-columns: repeat(15, minmax(0, 1fr));
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .result-mark {
+      min-width: 0;
+      min-height: 23px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fffdf8;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .result-mark.current {
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .result-mark.good {
+      border-color: var(--green);
+      background: #e5f2e9;
+      color: var(--green);
+    }
+
+    .result-mark.bad {
+      border-color: var(--red);
+      background: #f8e5e2;
+      color: var(--red);
+    }
+
+    .result-mark.half {
+      border-color: var(--gold);
+      background: #fff3cf;
+      color: #7a560e;
     }
 
     .game {
@@ -403,6 +447,8 @@
       <button class="small" id="applyDifficultyBtn" type="button">적용</button>
     </section>
 
+    <section class="result-strip" id="resultStrip" aria-label="문제별 정답 오답 표시"></section>
+
     <section class="game" aria-label="사자성어 문제">
       <p class="meaning" id="meaningText">뜻을 보고 사자성어를 맞추세요.</p>
       <div class="answer" id="answerSlots" aria-label="정답 칸"></div>
@@ -443,9 +489,9 @@
   </div>
 
   <script>
-    const RANK_KEY = "sajaseongeoRanks20260606v1";
-    const RANK_BACKUP_KEY = "sajaseongeoRanks20260606v1Backup";
-    const BEST_KEY = "sajaseongeoBest20260606v1";
+    const RANK_KEY = "sajaseongeoRanks20260606v2";
+    const RANK_BACKUP_KEY = "sajaseongeoRanks20260606v2Backup";
+    const BEST_KEY = "sajaseongeoBest20260606v2";
 
     const DIFFICULTY = {
       normal: { label: "보통", rounds: 12, life: 3, time: 25, letters: 8, correct: 100, combo: 18, hint: 20, timeout: 1 },
@@ -495,6 +541,7 @@
       time: document.getElementById("timeText"),
       round: document.getElementById("roundText"),
       difficulty: document.getElementById("difficultySelect"),
+      resultStrip: document.getElementById("resultStrip"),
       meaning: document.getElementById("meaningText"),
       slots: document.getElementById("answerSlots"),
       pad: document.getElementById("letterPad"),
@@ -597,6 +644,7 @@
         combo: 0,
         life: cfg.life,
         timeLeft: cfg.time,
+        results: Array(cfg.rounds).fill(""),
         picked: [],
         letters: [],
         locked: false,
@@ -649,6 +697,7 @@
       state.score += halfScore;
       state.combo = 0;
       state.locked = true;
+      setRoundResult("half");
       notice(`시간초과. 정답은 ${currentProblem().word} +${halfScore}점`, "bad");
       render();
       finishRound(850);
@@ -656,6 +705,7 @@
 
     function render() {
       renderStatus();
+      renderResults();
       renderSlots();
       renderLetters();
     }
@@ -667,6 +717,24 @@
       els.life.textContent = state.life;
       els.time.textContent = Math.max(0, state.timeLeft);
       els.round.textContent = `${Math.min(state.round + 1, cfg.rounds)}/${cfg.rounds}`;
+    }
+
+    function renderResults() {
+      const cfg = settings();
+      els.resultStrip.innerHTML = "";
+      els.resultStrip.style.gridTemplateColumns = `repeat(${cfg.rounds}, minmax(0, 1fr))`;
+      for (let i = 0; i < cfg.rounds; i += 1) {
+        const node = document.createElement("div");
+        const result = state.results[i];
+        node.className = "result-mark";
+        if (i === state.round && !state.locked) node.classList.add("current");
+        if (result === "O") node.classList.add("good");
+        if (result === "X") node.classList.add("bad");
+        if (result === "half") node.classList.add("half");
+        node.textContent = result === "half" ? "반" : (result || String(i + 1));
+        node.setAttribute("aria-label", `${i + 1}번 ${node.textContent}`);
+        els.resultStrip.appendChild(node);
+      }
     }
 
     function renderSlots() {
@@ -724,16 +792,24 @@
         const plus = cfg.correct + state.combo * cfg.combo + timeBonus - (state.hinted ? cfg.hint : 0);
         state.score += Math.max(30, plus);
         state.combo += 1;
+        setRoundResult("O");
         notice(`정답! ${problem.word} +${Math.max(30, plus)}점`, "good");
         finishRound(650);
       } else {
         state.life -= 1;
         state.combo = 0;
         state.score = Math.max(0, state.score - 20);
+        setRoundResult("X");
         notice(`오답. 정답은 ${problem.word}`, "bad");
         finishRound(900);
       }
       render();
+    }
+
+    function setRoundResult(mark) {
+      if (!state.results[state.round]) {
+        state.results[state.round] = mark;
+      }
     }
 
     function finishRound(delay) {
@@ -770,6 +846,7 @@
       state.combo = 0;
       state.score = Math.max(0, state.score - 10);
       state.locked = true;
+      setRoundResult("X");
       notice(`넘김. 정답은 ${currentProblem().word}`, "bad");
       render();
       finishRound(750);
