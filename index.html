@@ -212,6 +212,71 @@
       color: #7a560e;
     }
 
+    .round-popup {
+      position: fixed;
+      inset: 0;
+      z-index: 18;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, .22);
+      pointer-events: none;
+    }
+
+    .round-popup.show {
+      display: grid;
+    }
+
+    .round-popup-card {
+      width: min(86vw, 290px);
+      padding: 20px 16px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      text-align: center;
+      box-shadow: 0 16px 34px rgba(0, 0, 0, .28);
+    }
+
+    .round-popup-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 34px;
+      line-height: 1;
+    }
+
+    .round-popup-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .round-popup.good .round-popup-card {
+      border-color: var(--green);
+    }
+
+    .round-popup.good strong {
+      color: var(--green);
+    }
+
+    .round-popup.bad .round-popup-card {
+      border-color: var(--red);
+    }
+
+    .round-popup.bad strong {
+      color: var(--red);
+    }
+
+    .round-popup.half .round-popup-card {
+      border-color: var(--gold);
+    }
+
+    .round-popup.half strong {
+      color: #7a560e;
+    }
+
     .game {
       min-height: 0;
       padding: 8px;
@@ -476,6 +541,13 @@
     </div>
   </div>
 
+  <div class="round-popup" id="roundPopup" aria-live="polite" aria-label="문제 결과">
+    <div class="round-popup-card">
+      <strong id="roundPopupTitle">O</strong>
+      <p id="roundPopupText">정답입니다.</p>
+    </div>
+  </div>
+
   <div class="modal" id="finishModal" role="dialog" aria-modal="true" aria-label="게임 종료">
     <div class="modal-card">
       <h2 id="finishTitle">게임 종료</h2>
@@ -489,9 +561,9 @@
   </div>
 
   <script>
-    const RANK_KEY = "sajaseongeoRanks20260606v2";
-    const RANK_BACKUP_KEY = "sajaseongeoRanks20260606v2Backup";
-    const BEST_KEY = "sajaseongeoBest20260606v2";
+    const RANK_KEY = "sajaseongeoRanks20260606v3";
+    const RANK_BACKUP_KEY = "sajaseongeoRanks20260606v3Backup";
+    const BEST_KEY = "sajaseongeoBest20260606v3";
 
     const DIFFICULTY = {
       normal: { label: "보통", rounds: 12, life: 3, time: 25, letters: 8, correct: 100, combo: 18, hint: 20, timeout: 1 },
@@ -548,6 +620,9 @@
       notice: document.getElementById("noticeText"),
       rankModal: document.getElementById("rankModal"),
       finishModal: document.getElementById("finishModal"),
+      roundPopup: document.getElementById("roundPopup"),
+      roundPopupTitle: document.getElementById("roundPopupTitle"),
+      roundPopupText: document.getElementById("roundPopupText"),
       rankList: document.getElementById("rankList"),
       finishTitle: document.getElementById("finishTitle"),
       finishText: document.getElementById("finishText"),
@@ -654,6 +729,7 @@
       scoreSaved = false;
       els.finishModal.classList.remove("show");
       els.rankModal.classList.remove("show");
+      hideRoundPopup();
       loadQuestion();
     }
 
@@ -692,6 +768,7 @@
     }
 
     function timeOut() {
+      if (state.locked) return;
       const cfg = settings();
       const halfScore = Math.floor(cfg.correct / 2);
       state.score += halfScore;
@@ -699,8 +776,9 @@
       state.locked = true;
       setRoundResult("half");
       notice(`시간초과. 정답은 ${currentProblem().word} +${halfScore}점`, "bad");
+      showRoundPopup("반", `시간초과 / 정답 ${currentProblem().word} / +${halfScore}점`, "half");
       render();
-      finishRound(850);
+      finishRound(1250);
     }
 
     function render() {
@@ -794,14 +872,16 @@
         state.combo += 1;
         setRoundResult("O");
         notice(`정답! ${problem.word} +${Math.max(30, plus)}점`, "good");
-        finishRound(650);
+        showRoundPopup("O", `정답 ${problem.word} / +${Math.max(30, plus)}점`, "good");
+        finishRound(1150);
       } else {
         state.life -= 1;
         state.combo = 0;
         state.score = Math.max(0, state.score - 20);
         setRoundResult("X");
         notice(`오답. 정답은 ${problem.word}`, "bad");
-        finishRound(900);
+        showRoundPopup("X", `오답 / 정답 ${problem.word}`, "bad");
+        finishRound(1250);
       }
       render();
     }
@@ -815,7 +895,10 @@
     function finishRound(delay) {
       window.clearInterval(timerId);
       window.clearTimeout(nextTimerId);
-      nextTimerId = window.setTimeout(nextQuestion, delay);
+      nextTimerId = window.setTimeout(() => {
+        hideRoundPopup();
+        nextQuestion();
+      }, delay);
     }
 
     function nextQuestion() {
@@ -848,8 +931,9 @@
       state.locked = true;
       setRoundResult("X");
       notice(`넘김. 정답은 ${currentProblem().word}`, "bad");
+      showRoundPopup("X", `넘김 / 정답 ${currentProblem().word}`, "bad");
       render();
-      finishRound(750);
+      finishRound(1150);
     }
 
     function endGame() {
@@ -865,6 +949,16 @@
     function notice(text, type) {
       els.notice.textContent = text;
       els.notice.className = `notice ${type || ""}`.trim();
+    }
+
+    function showRoundPopup(title, text, type) {
+      els.roundPopupTitle.textContent = title;
+      els.roundPopupText.textContent = text;
+      els.roundPopup.className = `round-popup show ${type || ""}`.trim();
+    }
+
+    function hideRoundPopup() {
+      els.roundPopup.className = "round-popup";
     }
 
     function renderRanks() {
