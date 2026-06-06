@@ -361,18 +361,18 @@
 
     .controls {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 5px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 4px;
       padding-bottom: env(safe-area-inset-bottom);
     }
 
     .controls button {
       min-height: 41px;
-      padding: 0 4px;
+      padding: 0 2px;
       border: 1px solid var(--line);
       background: #fffaf1;
       box-shadow: 0 3px 0 #d4c5b0;
-      font-size: 13px;
+      font-size: 12px;
     }
 
     .controls .blue {
@@ -380,6 +380,13 @@
       background: var(--blue);
       color: #fff;
       box-shadow: 0 3px 0 #0d5061;
+    }
+
+    .controls .green {
+      border-color: #24653f;
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 3px 0 #205836;
     }
 
     .modal {
@@ -522,7 +529,8 @@
     </section>
 
     <nav class="controls" aria-label="게임 조작">
-      <button id="undoBtn" type="button">지우기</button>
+      <button id="cancelBtn" type="button">취소</button>
+      <button class="green" id="confirmBtn" type="button">확인</button>
       <button id="hintBtn" type="button">힌트</button>
       <button id="skipBtn" type="button">넘김</button>
       <button class="blue" id="newBtn" type="button">새게임</button>
@@ -561,9 +569,9 @@
   </div>
 
   <script>
-    const RANK_KEY = "sajaseongeoRanks20260606v3";
-    const RANK_BACKUP_KEY = "sajaseongeoRanks20260606v3Backup";
-    const BEST_KEY = "sajaseongeoBest20260606v3";
+    const RANK_KEY = "sajaseongeoRanks20260606v4";
+    const RANK_BACKUP_KEY = "sajaseongeoRanks20260606v4Backup";
+    const BEST_KEY = "sajaseongeoBest20260606v4";
 
     const DIFFICULTY = {
       normal: { label: "보통", rounds: 12, life: 3, time: 25, letters: 8, correct: 100, combo: 18, hint: 20, timeout: 1 },
@@ -849,7 +857,9 @@
       state.picked.push(letter);
       renderSlots();
       renderLetters();
-      if (state.picked.length === 4) checkAnswer();
+      if (state.picked.length === 4) {
+        notice("확인을 누르면 채점합니다. 취소하면 다시 고릅니다.", "");
+      }
     }
 
     function undoLetter() {
@@ -920,7 +930,25 @@
       state.picked.push(letter);
       notice("힌트 사용: 점수와 시간이 줄었습니다.", "");
       render();
-      if (state.picked.length === 4) checkAnswer();
+      if (state.picked.length === 4) {
+        notice("확인을 누르면 채점합니다. 취소하면 다시 고릅니다.", "");
+      }
+    }
+
+    function cancelAnswer() {
+      if (state.locked || state.picked.length === 0) return;
+      state.picked = [];
+      notice("선택을 취소했습니다. 다시 고르세요.", "");
+      render();
+    }
+
+    function confirmAnswer() {
+      if (state.locked) return;
+      if (state.picked.length !== 4) {
+        notice("글자 4개를 모두 고른 뒤 확인을 누르세요.", "bad");
+        return;
+      }
+      checkAnswer();
     }
 
     function skipQuestion() {
@@ -1003,7 +1031,8 @@
       els.rankModal.classList.add("show");
     }
 
-    document.getElementById("undoBtn").addEventListener("click", undoLetter);
+    document.getElementById("cancelBtn").addEventListener("click", cancelAnswer);
+    document.getElementById("confirmBtn").addEventListener("click", confirmAnswer);
     document.getElementById("hintBtn").addEventListener("click", useHint);
     document.getElementById("skipBtn").addEventListener("click", skipQuestion);
     document.getElementById("newBtn").addEventListener("click", startGame);
